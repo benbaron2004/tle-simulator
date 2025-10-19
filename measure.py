@@ -2,11 +2,14 @@ import csv
 from skyfield.api import load
 from datetime import datetime, timezone
 import numpy as np
-from collections import Counter
-import matplotlib.pyplot as plt
 
 ts = load.timescale()
 now = datetime.now(timezone.utc)
+
+
+def calcAngleForBeam(gpsToNav, gpsToEarth):
+    cosEl = np.dot(gpsToNav, gpsToEarth) / (np.linalg.norm(gpsToNav) * np.linalg.norm(gpsToEarth))
+    return np.degrees(np.arccos(cosEl))
 
 
 def createSatRoute():
@@ -52,7 +55,12 @@ def measureVisibleSats():
                 cosElevation = np.dot(satsVector, earthVector) / (np.linalg.norm(satsVector) * np.linalg.norm(earthVector))
                 el = np.degrees(np.arccos(cosElevation))
 
-                if el >= minElevation and el <= maxElevation:
+                gpsToEarth = -gpsSatPos  # וקטור מהלווין לכדור הארץ
+                gpsToNav = navPos - gpsSatPos  # וקטור מהלווין לנווט
+                beamAngle = calcAngleForBeam(gpsToNav, gpsToEarth)
+                gpsBeamAngle = 28.5
+
+                if minElevation <= el <= maxElevation and beamAngle <= gpsBeamAngle:
                     dis = np.linalg.norm(satsVector)
                     xGps, yGps, zGps = gpsSatPos
 
@@ -70,29 +78,3 @@ def measureVisibleSats():
 
 createSatRoute()
 measureVisibleSats()
-
-
-def plotVisibleSats():
-    minuteCounts = Counter()
-
-    with open("visibleSatsForSat.csv", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            time = row["time"]
-            minuteCounts[time] += 1
-
-    times = sorted(minuteCounts.keys())
-    counts = [minuteCounts[t] for t in times]
-
-    plt.figure(figsize=(15, 6))
-    plt.plot(times, counts, marker="o", linestyle="-")
-    plt.xticks(times[::30], rotation=90)
-    plt.xlabel("Time (HH:MM)")
-    plt.ylabel("satellites")
-    plt.title("visible satellites per minute")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-
-plotVisibleSats()

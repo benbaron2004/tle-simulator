@@ -2,10 +2,9 @@ import math
 from datetime import datetime, timezone
 
 
-# חישוב checksum לשורה
 def compute_checksum(line):
     s = 0
-    for c in line[:68]:  # עמודות 1–68
+    for c in line[:68]:
         if c.isdigit():
             s += int(c)
         elif c == "-":
@@ -13,7 +12,6 @@ def compute_checksum(line):
     return s % 10
 
 
-# epoch בפורמט YYDDD.DDDDDDDD
 def datetime_to_tle_epoch(dt):
     year = dt.year % 100
     day_of_year = dt.timetuple().tm_yday
@@ -23,23 +21,20 @@ def datetime_to_tle_epoch(dt):
 
 def makeTle():
     EARTH_RADIUS = 6378
-    mu = 398600.4418  # km^3/s^2
+    mu = 398600.4418
 
-    # פרמטרי מסלול
     h = 15000
     a = EARTH_RADIUS + h
     incl = 55.0
     ecc = 0.0
     mean_motion = math.sqrt(mu / a**3) * 86400 / (2 * math.pi)  # rev/day
 
-    # פרמטרי מערכת לוויינים
     N = 15
     sat_base_num = 10001
     rev_number = 1
 
-    # epoch להיום
-    now = datetime.now(timezone.utc)
-    epoch = datetime_to_tle_epoch(now)
+    chosen_date = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    epoch = datetime_to_tle_epoch(chosen_date)
 
     tleList = []
 
@@ -63,5 +58,6 @@ def makeTle():
 
     with open("tleFiles/constellation.txt", "w") as f:
         f.write("\n".join(tleList))
+
 
 makeTle()
