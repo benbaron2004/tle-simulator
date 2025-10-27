@@ -12,6 +12,9 @@ def calcVisibleSats(lat, lon, minElevation, maxElevation):
     allVisibleSats = []
     now = datetime.now(timezone.utc)
 
+    xyz = user.itrs_xyz.km
+    x_user, y_user, z_user = xyz
+
     for hour in range(24):
         for minute in range(60):
             t = ts.utc(now.year, now.month, now.day, hour, minute, 0)
@@ -24,11 +27,18 @@ def calcVisibleSats(lat, lon, minElevation, maxElevation):
                     visibleSats.append(sat.name)
 
             allVisibleSats.append(
-                {"time": f"{hour:02d}:{minute:02d}", "numVisible": len(visibleSats), "sats": ", ".join(visibleSats)}
+                {
+                    "time": f"{hour:02d}:{minute:02d}",
+                    "x": x_user,
+                    "y": y_user,
+                    "z": z_user,
+                    "numVisible": len(visibleSats),
+                    "sats": ", ".join(visibleSats),
+                }
             )
 
     with open("visibleSats.csv", "w", newline="", encoding="utf-8") as csvfile:
-        fieldnames = ["time", "numVisible", "sats"]
+        fieldnames = ["time", "x", "y", "z", "numVisible", "sats"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
